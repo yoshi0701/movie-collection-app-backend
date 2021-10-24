@@ -30,7 +30,6 @@ type AppStatus struct {
 	Version     string `json:"version"`
 }
 
-//share global variable as application
 type application struct {
 	config config
 	logger *log.Logger
@@ -51,7 +50,6 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
 	defer db.Close()
 
 	app := &application{
@@ -71,7 +69,6 @@ func main() {
 	logger.Println("Starting server on port", cfg.port)
 
 	err = srv.ListenAndServe()
-
 	if err != nil {
 		log.Println(err)
 	}

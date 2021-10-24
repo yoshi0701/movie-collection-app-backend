@@ -16,7 +16,7 @@ func (m *DBModel) Get(id int) (*Movie, error) {
 	defer cancel()
 
 	query := `select id, title, description, year, release_date, rating, runtime, mpaa_rating,
-				created_at, updated_at for movies where id =$1
+				created_at, updated_at from movies where id = $1
 	`
 
 	row := m.DB.QueryRowContext(ctx, query, id)
@@ -35,20 +35,20 @@ func (m *DBModel) Get(id int) (*Movie, error) {
 		&movie.CreatedAt,
 		&movie.UpdatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
-	// get the genres
+	// get genres, if any
 	query = `select
-				mg.id, mg.movie_id, mg.grenre_id, g.genre_name
+				mg.id, mg.movie_id, mg.genre_id, g.genre_name
 			from
 				movies_genres mg
 				left join genres g on (g.id = mg.genre_id)
 			where
 				mg.movie_id = $1
 	`
+
 	rows, _ := m.DB.QueryContext(ctx, query, id)
 	defer rows.Close()
 
@@ -64,7 +64,6 @@ func (m *DBModel) Get(id int) (*Movie, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		genres = append(genres, mg)
 	}
 
