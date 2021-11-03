@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -85,7 +86,7 @@ func (m *DBModel) All(genre ...int) ([]*Movie, error) {
 	}
 
 	query := fmt.Sprintf(`select id, title, description, year, release_date, rating, runtime, mpaa_rating,
-				created_at, updated_at from movies  %s order by title`, where)
+				created_at, updated_at, coalesce(poster, '') from movies  %s order by title`, where)
 
 	rows, err := m.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -108,19 +109,21 @@ func (m *DBModel) All(genre ...int) ([]*Movie, error) {
 			&movie.MPAARating,
 			&movie.CreatedAt,
 			&movie.UpdatedAt,
+			&movie.Poster,
 		)
 		if err != nil {
 			return nil, err
 		}
 
+		// get genres, if any
 		genreQuery := `select
-				mg.id, mg.movie_id, mg.genre_id, g.genre_name
-			from
-				movies_genres mg
-				left join genres g on (g.id = mg.genre_id)
-			where
-				mg.movie_id = $1
-	`
+			mg.id, mg.movie_id, mg.genre_id, g.genre_name
+		from
+			movies_genres mg
+			left join genres g on (g.id = mg.genre_id)
+		where
+			mg.movie_id = $1
+		`
 
 		genreRows, _ := m.DB.QueryContext(ctx, genreQuery, movie.ID)
 
@@ -142,8 +145,8 @@ func (m *DBModel) All(genre ...int) ([]*Movie, error) {
 
 		movie.MovieGenre = genres
 		movies = append(movies, &movie)
-	}
 
+	}
 	return movies, nil
 }
 
@@ -199,8 +202,10 @@ func (m *DBModel) InsertMovie(movie Movie) error {
 	)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
+
 	return nil
 }
 
@@ -209,8 +214,8 @@ func (m *DBModel) UpdateMovie(movie Movie) error {
 	defer cancel()
 
 	stmt := `update movies set title = $1, description = $2, year = $3, release_date = $4, 
-			    runtime = $5, rating = $6, mpaa_rating = $7,
-				updated_at = $8 poster = $9 where id = $10`
+				runtime = $5, rating = $6, mpaa_rating = $7,
+				updated_at = $8, poster = $9 where id = $10`
 
 	_, err := m.DB.ExecContext(ctx, stmt,
 		movie.Title,
@@ -226,8 +231,10 @@ func (m *DBModel) UpdateMovie(movie Movie) error {
 	)
 
 	if err != nil {
+		log.Println(err)
 		return err
 	}
+
 	return nil
 }
 
@@ -241,5 +248,6 @@ func (m *DBModel) DeleteMovie(id int) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

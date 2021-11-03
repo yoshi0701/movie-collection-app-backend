@@ -211,7 +211,7 @@ func getPoster(movie models.Movie) models.Movie {
 	theUrl := "https://api.themoviedb.org/3/search/movie?api_key="
 	log.Println(theUrl + key + "&query=" + url.QueryEscape(movie.Title))
 
-	req, err := http.NewRequest("GET", theUrl+key+"&query"+url.QueryEscape(movie.Title), nil)
+	req, err := http.NewRequest("GET", theUrl+key+"&query="+url.QueryEscape(movie.Title), nil)
 	if err != nil {
 		log.Println(err)
 		return movie
@@ -219,7 +219,6 @@ func getPoster(movie models.Movie) models.Movie {
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
